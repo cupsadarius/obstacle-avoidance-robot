@@ -2,7 +2,7 @@
 #include "motorcontroller.h";
 #include "headcontroller.h";
 
-const bool debugMode = true;
+const bool debugMode = false;
 
 MotorController motorController;
 HeadController headController;
@@ -39,7 +39,7 @@ void setup() {
   rightSide.negative = 9;
   motorController.initMotors(leftSide, rightSide);
   motorController.setDebugMode(debugMode);
-  headController.initHead(10, 11, 5, 60);
+  headController.initHead(10, 11, 5, 80);
   headController.setDebugMode(debugMode);
   irrecv.enableIRIn(); // Start the IR receiver
   Serial.begin(9600);
@@ -71,8 +71,8 @@ int decide() {
   if (
     distances.rightDiagonal > sideDistanceLimit &&
     distances.right >= sideDistanceLimit &&
-    distances.center <= distanceLimit ||
-    distances.center <= distanceLimit &&
+    distances.center <= distanceLimit / 2 ||
+    distances.center <= distanceLimit / 2 &&
     distances.left >= sideDistanceLimit &&
     distances.leftDiagonal > sideDistanceLimit
   ) {
@@ -126,7 +126,7 @@ void loop() {
     }
     irrecv.resume(); // receive the next value
   }
-  while (isAutomatic) { //The system gets into this loop during the remote control mode until mode=0 (with '*')
+  while (!isAutomatic) { //The system gets into this loop during the remote control mode until mode=0 (with '*')
     if (irrecv.decode(&results)) { //If something is being received
       translateIR();//Do something depending on the signal received
       irrecv.resume(); // receive the next value
@@ -142,7 +142,7 @@ void loop() {
       ++cycles;
     }
 
-    distance = headController.getDistanceAt(60); // use the watch() function to see if anything is ahead (when the robot is just moving forward and not looking around it will test the distance in front)
+    distance = headController.getDistanceAt(80); // use the watch() function to see if anything is ahead (when the robot is just moving forward and not looking around it will test the distance in front)
     if (distance < distanceLimit) { // The robot will just stop if it is completely sure there's an obstacle ahead (must test 10 times) (needed to ignore ultrasonic sensor's false signals)
       ++objectAhead;
     }

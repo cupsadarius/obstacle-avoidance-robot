@@ -41,7 +41,7 @@ int HeadController::getDistanceAt(int headAngle) {
 
 struct SurroundingDistances HeadController::getSurroundingDistances() {
   struct SurroundingDistances surroundingDistances;
-  int headDelay = HeadController::isDebugMode ? 300 : 100;
+  int headDelay = HeadController::isDebugMode ? 1000 : 100;
   int increment = round(HeadController::centerAngle * 2 / 4);
   int rightAngle = 0;
   int rightDiagonalAngle = rightAngle + increment;
