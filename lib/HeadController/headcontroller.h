@@ -27,7 +27,7 @@ private:
   int trigger;
   int echo;
   int centerAngle;
-  long microsecondsToCentimeters(int miliseconds);
+  long microsecondsToCentimeters(long miliseconds);
   int distance();
 };
 

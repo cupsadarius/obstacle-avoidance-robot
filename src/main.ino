@@ -2,7 +2,7 @@
 #include "motorcontroller.h";
 #include "headcontroller.h";
 
-const bool debugMode = false;
+const bool debugMode = true;
 
 MotorController motorController;
 HeadController headController;
@@ -58,11 +58,9 @@ int decide() {
 
   if (
     distances.right > sideDistanceLimit &&
-    distances.rightDiagonal >= sideDistanceLimit &&
     distances.center <= distanceLimit ||
     distances.center <= distanceLimit &&
-    distances.left > sideDistanceLimit &&
-    distances.leftDiagonal >= sideDistanceLimit
+    distances.left > sideDistanceLimit
   ) {
 
     return distances.right > distances.left ? RIGHT : LEFT;
@@ -71,8 +69,8 @@ int decide() {
   if (
     distances.rightDiagonal > sideDistanceLimit &&
     distances.right >= sideDistanceLimit &&
-    distances.center <= distanceLimit / 2 ||
-    distances.center <= distanceLimit / 2 &&
+    distances.center <= distanceLimit ||
+    distances.center <= distanceLimit &&
     distances.left >= sideDistanceLimit &&
     distances.leftDiagonal > sideDistanceLimit
   ) {
@@ -103,6 +101,9 @@ void translateIR() { //Used when robot is switched to operate in remote control 
       break;
     case 0xFF42BD:  //Case '*'
       isAutomatic = true; motorController.stop(); // If an '*' is received, switch to automatic robot operating mode
+      break;
+    case 0xFFB04F:
+      changeDirection();
       break;
     default:
       ;
@@ -185,6 +186,9 @@ void changeDirection() {
 }
 
 void printDistances(SurroundingDistances surroundingDistances) {
+  if (!debugMode) {
+    return;
+  }
   Serial.print("Left distance: ");
   Serial.print(surroundingDistances.left);
   Serial.print(" Left diagonal distance: ");
@@ -198,6 +202,9 @@ void printDistances(SurroundingDistances surroundingDistances) {
 }
 
 void printDecisions() {
+  if (!debugMode) {
+    return;
+  }
   Serial.print("Distance to obstacle ");
   Serial.print(distance);
   Serial.print(" and it's been there for ");
@@ -227,7 +234,12 @@ void printDecisions() {
 }
 
 void printRemoteKeys() {
+  if (!debugMode) {
+    return;
+  }
   Serial.print("Remote key pressed: ");
+  Serial.print(results.value);
+  Serial.print(" ");
   switch (results.value) {
     case 0xFF629D: //Case 'FORWARD'
       Serial.println("FORWARD");
@@ -254,6 +266,9 @@ void printRemoteKeys() {
       break;
     case 0xFF4AB5:
       Serial.println("Stop robot");
+      break;
+    case 0xFFB04F:
+      Serial.println("get surroundingDistances");
       break;
     default:
       ;
