@@ -1,5 +1,7 @@
 #include "headcontroller.h";
 
+const int scanCount = 3;
+
 HeadController::HeadController() {}
 
 HeadController::~HeadController() {}
@@ -43,27 +45,32 @@ int HeadController::distance() {
   return round(HeadController::microsecondsToCentimeters(responseTime));
 }
 
-int filterSpikes(int data[], int length, int treshold = 5) {
+int getClosestToMedian(int data[], int length) {
   int medianValue = 0;
-  int filtered = 0;
+  int minDistanceToMedian = 9999999;
+  int minDistanceToMedianPos = 0;
+
   for (int i = 0; i < length; i++) {
     medianValue += data[i];
   }
   medianValue = medianValue / length;
-  int j = 0;
-  for (int i = 0; i < length; i++) {
-    if (data[i] - treshold <= medianValue) {
-      filtered += data[i];
-      j++;
-    }
-  }
+
+  // for (int i = 0; i < length; i++) {
+  //   Serial.print(data[i]);
+  //   Serial.print(" ");
+  //   Serial.println(abs(medianValue - data[i]));
+  //   if (abs(medianValue - data[i]) < minDistanceToMedian) {
+  //     minDistanceToMedian = abs(medianValue - data[i]);
+  //     minDistanceToMedianPos = i;
+  //   }
+  // }
   Serial.println(medianValue);
-  Serial.println(j);
-  return filtered / j;
+  // Serial.println(data[minDistanceToMedianPos]);
+  // return data[minDistanceToMedianPos];
+  return medianValue;
 }
 
-int improvedFilterSpikes(int data[], int length) {
-  int size = length;
+int filterSpikes(int data[], int length, bool debugMode) {
   int min = data[0];
   int max = data[0];
   int minPos = 0;
@@ -78,12 +85,23 @@ int improvedFilterSpikes(int data[], int length) {
       maxPos = i;
     }
   }
+  if (debugMode) {
+    Serial.print("Stripping ");
+    Serial.print(min);
+    Serial.print(" and ");
+    Serial.println(max);
+  }
 
-  memmove(data + minPos, data + minPos + 1, (size - 2 - 1) * sizeof(int));
-  size--;
-  memmove(data + maxPos, data + maxPos + 1, (size - 2 - 1) * sizeof(int));
-  size--;
-  return filterSpikes(data, length - 2);
+  int strpped[3];
+  int j = 0;
+  for (int i = 0; i < length; i++) {
+    if (i != minPos && i != maxPos) {
+      strpped[j] = data[i];
+      j++;
+    }
+  }
+
+  return getClosestToMedian(strpped, length - 2);
 }
 
 int HeadController::getDistanceAt(int headAngle) {
@@ -93,17 +111,16 @@ int HeadController::getDistanceAt(int headAngle) {
     Serial.println(headAngle);
   }
   int distance[5];
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < scanCount; i++) {
     distance[i] = HeadController::distance();
   }
-  int filtered = improvedFilterSpikes(distance, 5);
-  Serial.println(filtered);
+  int filtered = filterSpikes(distance, scanCount, HeadController::isDebugMode);
   return filtered;
 }
 
 struct SurroundingDistances HeadController::getSurroundingDistances() {
   struct SurroundingDistances surroundingDistances;
-  int headDelay = HeadController::isDebugMode ? 500 : 150;
+  int headDelay = HeadController::isDebugMode ? 120 : 120;
   int increment = round(HeadController::centerAngle * 2 / 4);
   int rightAngle = 0;
   int rightDiagonalAngle = rightAngle + increment;
